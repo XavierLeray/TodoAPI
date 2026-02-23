@@ -24,7 +24,13 @@ public class UpdateTodoCommandHandler : IRequestHandler<UpdateTodoCommand, TodoI
         {
             Id = request.Id,
             Title = request.Title,
-            IsCompleted = request.IsCompleted
+            IsCompleted = request.IsCompleted,
+            CategoryId = request.CategoryId,
+            TodoItemTags = request.TagIds.Select(tagId => new TodoItemTag
+            {
+                TagId = tagId,
+                AssignedAt = DateTime.UtcNow
+            }).ToList()
         };
 
         var updated = await _repository.UpdateAsync(request.Id, todo, cancellationToken);
@@ -32,12 +38,27 @@ public class UpdateTodoCommandHandler : IRequestHandler<UpdateTodoCommand, TodoI
 
         await _cache.RemoveAsync(CacheKey, cancellationToken);
 
-        return new TodoItemResponse
-        {
-            Id = updated.Id,
-            Title = updated.Title,
-            IsCompleted = updated.IsCompleted,
-            CreatedAt = updated.CreatedAt
-        };
+        var todoWithRelations = await _repository.GetByIdWithRelationsAsync(updated.Id, cancellationToken);
+
+        return MapToResponse(todoWithRelations!);
     }
+
+    private static TodoItemResponse MapToResponse(TodoItem todo) => new()
+    {
+        Id = todo.Id,
+        Title = todo.Title,
+        IsCompleted = todo.IsCompleted,
+        CreatedAt = todo.CreatedAt,
+        Category = todo.Category != null ? new CategoryDto
+        {
+            Id = todo.Category.Id,
+            Name = todo.Category.Name,
+            Color = todo.Category.Color
+        } : null,
+        Tags = todo.TodoItemTags.Select(tt => new TagDto
+        {
+            Id = tt.Tag.Id,
+            Name = tt.Tag.Name
+        }).ToList()
+    };
 }
