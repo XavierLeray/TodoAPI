@@ -19,10 +19,12 @@ public class LoginCommandHandler : IRequestHandler<LoginCommand, AuthResponse?>
     public async Task<AuthResponse?> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username, cancellationToken);
-        if (user is null) return null;
+
+        if (user == null)
+            throw new UnauthorizedAccessException("Invalid username or password");
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-            return null;
+            throw new UnauthorizedAccessException("Invalid username or password");
 
         var roles = await _userRepository.GetUserRolesAsync(user.Id, cancellationToken);
         var token = _jwtService.GenerateToken(user.Id, user.Username, roles);
