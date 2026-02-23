@@ -36,6 +36,16 @@ public class AppDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.HasIndex(e => e.Username).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
+
+            // Seed admin user (password: Admin123!)
+            entity.HasData(new User
+            {
+                Id = 1,
+                Username = "admin",
+                Email = "admin@todoapi.com",
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
+                CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            });
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -66,6 +76,14 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
 
             entity.Property(e => e.AssignedAt).IsRequired();
+
+            // Seed: admin has Admin role
+            entity.HasData(new UserRole
+            {
+                UserId = 1,
+                RoleId = 1,
+                AssignedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
+            });
         });
     }
 }
