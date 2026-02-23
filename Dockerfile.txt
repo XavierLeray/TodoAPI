@@ -1,0 +1,23 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY TodoAPI.sln .
+COPY TodoAPI.Domain/TodoAPI.Domain.csproj TodoAPI.Domain/
+COPY TodoAPI.Application/TodoAPI.Application.csproj TodoAPI.Application/
+COPY TodoAPI.Infrastructure/TodoAPI.Infrastructure.csproj TodoAPI.Infrastructure/
+COPY TodoAPI.API/TodoAPI.API.csproj TodoAPI.API/
+RUN dotnet restore TodoAPI.API/TodoAPI.API.csproj
+
+COPY TodoAPI.Domain/ TodoAPI.Domain/
+COPY TodoAPI.Application/ TodoAPI.Application/
+COPY TodoAPI.Infrastructure/ TodoAPI.Infrastructure/
+COPY TodoAPI.API/ TodoAPI.API/
+RUN dotnet publish TodoAPI.API/TodoAPI.API.csproj -c Release -o /app/publish --no-restore
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "TodoAPI.API.dll"]

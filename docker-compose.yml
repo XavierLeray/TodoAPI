@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/todoapi.db
+      - ConnectionStrings__Redis=redis:6379
+      - Jwt__Key=ThisIsASecretKeyForDevelopmentOnly-MustBeAtLeast32Characters!
+      - Jwt__Issuer=TodoAPI
+      - Jwt__Audience=TodoAPI
+    volumes:
+      - api-data:/app/data
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  api-data:
