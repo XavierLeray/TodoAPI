@@ -1,9 +1,13 @@
+using TodoAPI.Application;
 using TodoAPI.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
+
+// Application (MediatR)
+builder.Services.AddApplication();
 
 // Infrastructure (EF Core + SQLite)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
