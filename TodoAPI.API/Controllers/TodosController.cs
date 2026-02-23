@@ -1,6 +1,11 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using TodoAPI.Domain.Entities;
-using TodoAPI.Domain.Ports;
+using TodoAPI.Application.Commands.CreateTodo;
+using TodoAPI.Application.Commands.DeleteTodo;
+using TodoAPI.Application.Commands.UpdateTodo;
+using TodoAPI.Application.DTOs;
+using TodoAPI.Application.Queries.GetAllTodos;
+using TodoAPI.Application.Queries.GetTodoById;
 
 namespace TodoAPI.API.Controllers;
 
@@ -8,68 +13,57 @@ namespace TodoAPI.API.Controllers;
 [ApiController]
 public class TodosController : ControllerBase
 {
-    private readonly ITodoRepository _repository;
+    private readonly IMediator _mediator;
 
-    public TodosController(ITodoRepository repository)
+    public TodosController(IMediator mediator)
     {
-        _repository = repository;
+        _mediator = mediator;
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(List<TodoItem>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<List<TodoItem>>> GetAll(CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(List<TodoItemResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<List<TodoItemResponse>>> GetAll()
     {
-        var todos = await _repository.GetAllAsync(cancellationToken);
+        var todos = await _mediator.Send(new GetAllTodosQuery());
         return Ok(todos);
     }
 
     [HttpGet("{id}")]
-    [ProducesResponseType(typeof(TodoItem), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TodoItem>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<TodoItemResponse>> GetById(int id)
     {
-        var todo = await _repository.GetByIdAsync(id, cancellationToken);
+        var todo = await _mediator.Send(new GetTodoByIdQuery(id));
         return todo is null ? NotFound() : Ok(todo);
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(TodoItem), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<TodoItem>> Create([FromBody] CreateTodoRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TodoItemResponse>> Create([FromBody] CreateTodoRequest request)
     {
-        if (!TodoItem.IsTitleValid(request.Title))
-            return BadRequest("Invalid title: must be 3-200 characters and not contain 'spam'");
-
-        var todo = TodoItem.Create(request.Title);
-        var created = await _repository.CreateAsync(todo, cancellationToken);
-
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        var todo = await _mediator.Send(new CreateTodoCommand(request.Title));
+        return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
     }
 
     [HttpPut("{id}")]
-    [ProducesResponseType(typeof(TodoItem), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TodoItem>> Update(int id, [FromBody] UpdateTodoRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TodoItemResponse>> Update(int id, [FromBody] UpdateTodoRequest request)
     {
-        var todo = new TodoItem
-        {
-            Title = request.Title,
-            IsCompleted = request.IsCompleted
-        };
+        if (id != request.Id)
+            return BadRequest("ID mismatch");
 
-        var updated = await _repository.UpdateAsync(id, todo, cancellationToken);
+        var updated = await _mediator.Send(new UpdateTodoCommand(request.Id, request.Title, request.IsCompleted));
         return updated is null ? NotFound() : Ok(updated);
     }
 
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult> Delete(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult> Delete(int id)
     {
-        var deleted = await _repository.DeleteAsync(id, cancellationToken);
+        var deleted = await _mediator.Send(new DeleteTodoCommand(id));
         return deleted ? NoContent() : NotFound();
     }
 }
-
-public record CreateTodoRequest(string Title);
-public record UpdateTodoRequest(string Title, bool IsCompleted);
