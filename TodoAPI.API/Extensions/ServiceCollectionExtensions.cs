@@ -3,6 +3,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 namespace TodoAPI.API.Extensions;
 
@@ -96,5 +97,19 @@ public static class ServiceCollectionExtensions
         services.AddAuthorization();
 
         return services;
+    }
+
+    public static IHostBuilder AddStructuredLogging(this IHostBuilder hostBuilder, IConfiguration configuration)
+    {
+        Log.Logger = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration)
+            .WriteTo.Console(outputTemplate:
+                "[{Timestamp:HH:mm:ss} {Level:u3}] [{CorrelationId}] {Message:lj}{NewLine}{Exception}")
+            .Enrich.FromLogContext()
+            .CreateLogger();
+
+        hostBuilder.UseSerilog();
+
+        return hostBuilder;
     }
 }

@@ -1,8 +1,9 @@
+using System.Diagnostics;
+
 namespace TodoAPI.API.Middleware;
 
 public class RequestLoggingMiddleware
 {
-    private const string CorrelationIdHeader = "X-Correlation-ID";
     private readonly RequestDelegate _next;
     private readonly ILogger<RequestLoggingMiddleware> _logger;
 
@@ -14,40 +15,37 @@ public class RequestLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var correlationId = context.Items[CorrelationIdHeader]?.ToString() ?? "unknown";
         var method = context.Request.Method;
         var path = context.Request.Path;
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
 
-        _logger.LogInformation(
-            "[{CorrelationId}] IN {Method} {Path}",
-            correlationId, method, path);
+        _logger.LogInformation("IN {Method} {Path}", method, path);
 
         try
         {
             await _next(context);
             stopwatch.Stop();
 
-            var level = context.Response.StatusCode >= 500
+            var statusCode = context.Response.StatusCode;
+            var elapsed = stopwatch.ElapsedMilliseconds;
+
+            var level = statusCode >= 500
                 ? LogLevel.Error
-                : context.Response.StatusCode >= 400
+                : statusCode >= 400
                     ? LogLevel.Warning
                     : LogLevel.Information;
 
             _logger.Log(level,
-                "[{CorrelationId}] OUT {Method} {Path} {StatusCode} ({Duration}ms)",
-                correlationId, method, path,
-                context.Response.StatusCode,
-                stopwatch.ElapsedMilliseconds);
+                "OUT {Method} {Path} {StatusCode} ({Duration}ms)",
+                method, path, statusCode, elapsed);
         }
         catch (Exception ex)
         {
             stopwatch.Stop();
 
             _logger.LogError(ex,
-                "[{CorrelationId}] ERROR {Method} {Path} EXCEPTION ({Duration}ms)",
-                correlationId, method, path,
-                stopwatch.ElapsedMilliseconds);
+                "ERROR {Method} {Path} EXCEPTION ({Duration}ms)",
+                method, path, stopwatch.ElapsedMilliseconds);
 
             throw;
         }

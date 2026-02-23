@@ -1,8 +1,12 @@
+using Serilog;
 using TodoAPI.API.Extensions;
 using TodoAPI.Application;
 using TodoAPI.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Logging
+builder.Host.AddStructuredLogging(builder.Configuration);
 
 // API
 builder.Services.AddControllers();
@@ -17,10 +21,9 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddApplication();
 
 // Infrastructure (EF Core + SQLite + Redis)
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? "Data Source=todoapi.db";
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
-builder.Services.AddInfrastructure(connectionString, redisConnectionString);
+builder.Services.AddInfrastructure(
+    builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=todoapi.db",
+    builder.Configuration.GetConnectionString("Redis"));
 
 var app = builder.Build();
 

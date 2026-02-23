@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 using TodoAPI.API.Middleware;
 using TodoAPI.Infrastructure.Data;
 
@@ -6,7 +7,7 @@ namespace TodoAPI.API.Extensions;
 
 public static class WebApplicationExtensions
 {
-    public static WebApplication ConfigurePipeline(this WebApplication app)
+    public static void ConfigurePipeline(this WebApplication app)
     {
         if (app.Environment.IsDevelopment())
         {
@@ -17,7 +18,6 @@ public static class WebApplicationExtensions
                 options.SwaggerEndpoint("/swagger/v2/swagger.json", "TodoAPI v2");
             });
 
-            // Auto-migration + seed en développement
             using var scope = app.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             db.Database.EnsureCreated();
@@ -33,6 +33,6 @@ public static class WebApplicationExtensions
         app.MapControllers();
         app.MapHealthChecks("/health");
 
-        return app;
+        app.Lifetime.ApplicationStopping.Register(Log.CloseAndFlush);
     }
 }
