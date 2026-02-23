@@ -1,0 +1,24 @@
+## .NET
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+## IDE
+.vs/
+*.user
+*.suo
+
+## SQLite
+*.db
+*.db-shm
+*.db-wal
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Backups
+*.tmp
+*.bak
