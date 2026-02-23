@@ -10,7 +10,7 @@ namespace TodoAPI.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, string connectionString, string? redisConnectionString = null)
     {
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlite(connectionString));
@@ -18,6 +18,21 @@ public static class DependencyInjection
         services.AddScoped<ITodoRepository, EfTodoRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtService, JwtService>();
+
+        if (!string.IsNullOrEmpty(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = redisConnectionString;
+                options.InstanceName = "TodoAPI:";
+            });
+        }
+        else
+        {
+            services.AddDistributedMemoryCache();
+        }
+
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         return services;
     }

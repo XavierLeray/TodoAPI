@@ -32,10 +32,11 @@ builder.Services.AddAuthorization();
 // Application (MediatR + FluentValidation)
 builder.Services.AddApplication();
 
-// Infrastructure (EF Core + SQLite)
+// Infrastructure (EF Core + SQLite + Redis)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? "Data Source=todoapi.db";
-builder.Services.AddInfrastructure(connectionString);
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+builder.Services.AddInfrastructure(connectionString, redisConnectionString);
 
 var app = builder.Build();
 
