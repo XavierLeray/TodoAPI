@@ -20,17 +20,43 @@ public class CreateTodoCommandHandler : IRequestHandler<CreateTodoCommand, TodoI
 
     public async Task<TodoItemResponse> Handle(CreateTodoCommand request, CancellationToken cancellationToken)
     {
-        var todo = TodoItem.Create(request.Title);
-        var created = await _repository.CreateAsync(todo, cancellationToken);
+        var todo = new TodoItem
+        {
+            Title = request.Title,
+            IsCompleted = false,
+            CreatedAt = DateTime.UtcNow,
+            CategoryId = request.CategoryId,
+            TodoItemTags = request.TagIds.Select(tagId => new TodoItemTag
+            {
+                TagId = tagId,
+                AssignedAt = DateTime.UtcNow
+            }).ToList()
+        };
 
+        var created = await _repository.CreateAsync(todo, cancellationToken);
         await _cache.RemoveAsync(CacheKey, cancellationToken);
 
-        return new TodoItemResponse
-        {
-            Id = created.Id,
-            Title = created.Title,
-            IsCompleted = created.IsCompleted,
-            CreatedAt = created.CreatedAt
-        };
+        var todoWithRelations = await _repository.GetByIdWithRelationsAsync(created.Id, cancellationToken);
+
+        return MapToResponse(todoWithRelations!);
     }
+
+    private static TodoItemResponse MapToResponse(TodoItem todo) => new()
+    {
+        Id = todo.Id,
+        Title = todo.Title,
+        IsCompleted = todo.IsCompleted,
+        CreatedAt = todo.CreatedAt,
+        Category = todo.Category != null ? new CategoryDto
+        {
+            Id = todo.Category.Id,
+            Name = todo.Category.Name,
+            Color = todo.Category.Color
+        } : null,
+        Tags = todo.TodoItemTags.Select(tt => new TagDto
+        {
+            Id = tt.Tag.Id,
+            Name = tt.Tag.Name
+        }).ToList()
+    };
 }

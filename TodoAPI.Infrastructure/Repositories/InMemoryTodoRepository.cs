@@ -12,7 +12,16 @@ public class InMemoryTodoRepository : ITodoRepository
     public Task<List<TodoItem>> GetAllAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(_todos.Values.ToList());
 
+    public Task<List<TodoItem>> GetAllWithRelationsAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(_todos.Values.ToList());
+
     public Task<TodoItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        _todos.TryGetValue(id, out var todo);
+        return Task.FromResult(todo);
+    }
+
+    public Task<TodoItem?> GetByIdWithRelationsAsync(int id, CancellationToken cancellationToken = default)
     {
         _todos.TryGetValue(id, out var todo);
         return Task.FromResult(todo);
@@ -33,6 +42,8 @@ public class InMemoryTodoRepository : ITodoRepository
 
         existing.Title = todo.Title;
         existing.IsCompleted = todo.IsCompleted;
+        existing.CategoryId = todo.CategoryId;
+        existing.TodoItemTags = todo.TodoItemTags;
 
         return Task.FromResult<TodoItem?>(existing);
     }
