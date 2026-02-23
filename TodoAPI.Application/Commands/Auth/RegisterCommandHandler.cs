@@ -1,7 +1,6 @@
 using MediatR;
 using TodoAPI.Application.DTOs;
 using TodoAPI.Application.Services;
-using TodoAPI.Domain.Constants;
 using TodoAPI.Domain.Entities;
 using TodoAPI.Domain.Ports;
 
@@ -20,11 +19,11 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
 
     public async Task<AuthResponse?> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
-        var existingUser = await _userRepository.GetByUsernameAsync(request.Username, cancellationToken);
-        if (existingUser is not null) return null;
+        if (await _userRepository.UsernameExistsAsync(request.Username, cancellationToken))
+            throw new ArgumentException("Username already exists");
 
-        var existingEmail = await _userRepository.GetByEmailAsync(request.Email, cancellationToken);
-        if (existingEmail is not null) return null;
+        if (await _userRepository.EmailExistsAsync(request.Email, cancellationToken))
+            throw new ArgumentException("Email already exists");
 
         var user = new User
         {
@@ -34,16 +33,16 @@ public class RegisterCommandHandler : IRequestHandler<RegisterCommand, AuthRespo
             CreatedAt = DateTime.UtcNow
         };
 
-        var created = await _userRepository.CreateAsync(user, cancellationToken);
-        await _userRepository.AddUserRoleAsync(created.Id, 2, cancellationToken); // Role "User" = Id 2
+        await _userRepository.CreateAsync(user, cancellationToken);
+        await _userRepository.AssignRoleAsync(user.Id, 2, cancellationToken);
 
-        var roles = new List<string> { Roles.User };
-        var token = _jwtService.GenerateToken(created.Id, created.Username, roles);
+        var roles = new List<string> { "User" };
+        var token = _jwtService.GenerateToken(user.Id, user.Username, roles);
 
         return new AuthResponse
         {
             Token = token,
-            Username = created.Username,
+            Username = user.Username,
             Roles = roles
         };
     }

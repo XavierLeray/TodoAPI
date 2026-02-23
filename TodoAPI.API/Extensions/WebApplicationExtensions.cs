@@ -31,6 +31,7 @@ public static class WebApplicationExtensions
         app.UseAuthorization();
 
         app.MapControllers();
+        app.MapHealthChecks("/health");
 
         return app;
     }

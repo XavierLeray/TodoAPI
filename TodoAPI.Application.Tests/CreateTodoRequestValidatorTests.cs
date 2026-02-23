@@ -71,6 +71,6 @@ public class CreateTodoRequestValidatorTests
         var request = new CreateTodoRequest { Title = "Existing title" };
         var result = await _validator.ValidateAsync(request);
         result.IsValid.Should().BeFalse();
-        result.Errors.Should().Contain(e => e.ErrorMessage == "A todo with this title already exists");
+        result.Errors.Should().Contain(e => e.ErrorMessage == "Un todo avec ce titre existe déjà");
     }
 }

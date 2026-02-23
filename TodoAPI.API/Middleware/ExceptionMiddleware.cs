@@ -1,6 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using System.Text.Json;
-using Microsoft.AspNetCore.Mvc;
 
 namespace TodoAPI.API.Middleware;
 
@@ -23,22 +23,33 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception for {Method} {Path}",
-                context.Request.Method, context.Request.Path);
-
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/problem+json";
-
-            var problemDetails = new ProblemDetails
-            {
-                Status = (int)HttpStatusCode.InternalServerError,
-                Title = "An unexpected error occurred",
-                Detail = ex.Message,
-                Instance = context.Request.Path
-            };
-
-            var json = JsonSerializer.Serialize(problemDetails);
-            await context.Response.WriteAsync(json);
+            _logger.LogError(ex, "Exception non gérée : {Message}", ex.Message);
+            await HandleExceptionAsync(context, ex);
         }
+    }
+
+    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    {
+        var (statusCode, title) = exception switch
+        {
+            UnauthorizedAccessException => (HttpStatusCode.Unauthorized, "Non autorisé"),
+            KeyNotFoundException => (HttpStatusCode.NotFound, "Ressource introuvable"),
+            ArgumentException => (HttpStatusCode.BadRequest, "Requête invalide"),
+            _ => (HttpStatusCode.InternalServerError, "Une erreur interne est survenue")
+        };
+
+        var problem = new ProblemDetails
+        {
+            Status = (int)statusCode,
+            Title = title,
+            Detail = exception.Message,
+            Instance = context.Request.Path
+        };
+
+        context.Response.ContentType = "application/problem+json";
+        context.Response.StatusCode = (int)statusCode;
+
+        await context.Response.WriteAsync(
+            JsonSerializer.Serialize(problem));
     }
 }
