@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TodoAPI.Application.Commands.Auth;
@@ -5,6 +6,7 @@ using TodoAPI.Application.DTOs;
 
 namespace TodoAPI.API.Controllers;
 
+[ApiVersionNeutral]
 [Route("api/auth")]
 [ApiController]
 public class AuthController : ControllerBase

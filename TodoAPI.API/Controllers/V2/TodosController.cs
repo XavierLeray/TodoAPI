@@ -1,17 +1,20 @@
+using Asp.Versioning;
 using FluentValidation;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using TodoAPI.Application.Commands.CreateTodo;
 using TodoAPI.Application.Commands.DeleteTodo;
 using TodoAPI.Application.Commands.UpdateTodo;
 using TodoAPI.Application.DTOs;
 using TodoAPI.Application.Queries.GetAllTodos;
 using TodoAPI.Application.Queries.GetTodoById;
+using TodoAPI.Domain.Constants;
 
-namespace TodoAPI.API.Controllers;
+namespace TodoAPI.API.Controllers.V2;
 
-[Route("api/todos")]
+[ApiVersion("2.0")]
+[Route("api/v{version:apiVersion}/todos")]
 [ApiController]
 public class TodosController : ControllerBase
 {
@@ -45,6 +48,7 @@ public class TodosController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TodoItemResponse>> Create([FromBody] CreateTodoRequest request)
     {
         var validationResult = await _validator.ValidateAsync(request);
@@ -67,6 +71,7 @@ public class TodosController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<TodoItemResponse>> Update(int id, [FromBody] UpdateTodoRequest request)
     {
         if (id != request.Id)
@@ -76,10 +81,11 @@ public class TodosController : ControllerBase
         return updated is null ? NotFound() : Ok(updated);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = Roles.Admin)]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult> Delete(int id)
     {
         var deleted = await _mediator.Send(new DeleteTodoCommand(id));
