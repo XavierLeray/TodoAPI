@@ -1,6 +1,7 @@
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using TodoAPI.Application.Commands.CreateTodo;
 using TodoAPI.Application.Commands.DeleteTodo;
 using TodoAPI.Application.Commands.UpdateTodo;
@@ -40,6 +41,7 @@ public class TodosController : ControllerBase
         return todo is null ? NotFound() : Ok(todo);
     }
 
+    [Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -61,6 +63,7 @@ public class TodosController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
     }
 
+    [Authorize]
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -73,6 +76,7 @@ public class TodosController : ControllerBase
         return updated is null ? NotFound() : Ok(updated);
     }
 
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

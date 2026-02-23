@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TodoAPI.Application.Services;
 using TodoAPI.Domain.Ports;
 using TodoAPI.Infrastructure.Data;
 using TodoAPI.Infrastructure.Repositories;
+using TodoAPI.Infrastructure.Services;
 
 namespace TodoAPI.Infrastructure;
 
@@ -14,6 +16,8 @@ public static class DependencyInjection
             options.UseSqlite(connectionString));
 
         services.AddScoped<ITodoRepository, EfTodoRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IJwtService, JwtService>();
 
         return services;
     }
