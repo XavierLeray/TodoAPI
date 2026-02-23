@@ -1,3 +1,4 @@
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TodoAPI.Application.Commands.CreateTodo;
@@ -14,10 +15,12 @@ namespace TodoAPI.API.Controllers;
 public class TodosController : ControllerBase
 {
     private readonly IMediator _mediator;
+    private readonly IValidator<CreateTodoRequest> _validator;
 
-    public TodosController(IMediator mediator)
+    public TodosController(IMediator mediator, IValidator<CreateTodoRequest> validator)
     {
         _mediator = mediator;
+        _validator = validator;
     }
 
     [HttpGet]
@@ -42,6 +45,18 @@ public class TodosController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<TodoItemResponse>> Create([FromBody] CreateTodoRequest request)
     {
+        var validationResult = await _validator.ValidateAsync(request);
+        if (!validationResult.IsValid)
+        {
+            var errors = validationResult.Errors
+                .GroupBy(e => e.PropertyName)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(e => e.ErrorMessage).ToArray()
+                );
+            return ValidationProblem(new ValidationProblemDetails(errors));
+        }
+
         var todo = await _mediator.Send(new CreateTodoCommand(request.Title));
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
     }
