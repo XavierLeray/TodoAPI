@@ -17,8 +17,22 @@ public class EfTodoRepository : ITodoRepository
     public async Task<List<TodoItem>> GetAllAsync(CancellationToken cancellationToken = default)
         => await _context.TodoItems.ToListAsync(cancellationToken);
 
+    public async Task<List<TodoItem>> GetAllWithRelationsAsync(CancellationToken cancellationToken = default)
+        => await _context.TodoItems
+            .Include(t => t.Category)
+            .Include(t => t.TodoItemTags)
+                .ThenInclude(tt => tt.Tag)
+            .ToListAsync(cancellationToken);
+
     public async Task<TodoItem?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         => await _context.TodoItems.FindAsync([id], cancellationToken);
+
+    public async Task<TodoItem?> GetByIdWithRelationsAsync(int id, CancellationToken cancellationToken = default)
+        => await _context.TodoItems
+            .Include(t => t.Category)
+            .Include(t => t.TodoItemTags)
+                .ThenInclude(tt => tt.Tag)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
 
     public async Task<TodoItem> CreateAsync(TodoItem todo, CancellationToken cancellationToken = default)
     {
@@ -29,11 +43,18 @@ public class EfTodoRepository : ITodoRepository
 
     public async Task<TodoItem?> UpdateAsync(int id, TodoItem todo, CancellationToken cancellationToken = default)
     {
-        var existing = await _context.TodoItems.FindAsync([id], cancellationToken);
+        var existing = await _context.TodoItems
+            .Include(t => t.TodoItemTags)
+            .FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+
         if (existing is null) return null;
 
         existing.Title = todo.Title;
         existing.IsCompleted = todo.IsCompleted;
+        existing.CategoryId = todo.CategoryId;
+
+        existing.TodoItemTags.Clear();
+        existing.TodoItemTags = todo.TodoItemTags;
 
         await _context.SaveChangesAsync(cancellationToken);
         return existing;

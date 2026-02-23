@@ -1,5 +1,6 @@
 using MediatR;
 using TodoAPI.Application.DTOs;
+using TodoAPI.Domain.Entities;
 using TodoAPI.Domain.Ports;
 
 namespace TodoAPI.Application.Queries.GetTodoById;
@@ -15,7 +16,7 @@ public class GetTodoByIdQueryHandler : IRequestHandler<GetTodoByIdQuery, TodoIte
 
     public async Task<TodoItemResponse?> Handle(GetTodoByIdQuery request, CancellationToken cancellationToken)
     {
-        var todo = await _repository.GetByIdAsync(request.Id, cancellationToken);
+        var todo = await _repository.GetByIdWithRelationsAsync(request.Id, cancellationToken);
         if (todo is null) return null;
 
         return new TodoItemResponse
@@ -23,7 +24,18 @@ public class GetTodoByIdQueryHandler : IRequestHandler<GetTodoByIdQuery, TodoIte
             Id = todo.Id,
             Title = todo.Title,
             IsCompleted = todo.IsCompleted,
-            CreatedAt = todo.CreatedAt
+            CreatedAt = todo.CreatedAt,
+            Category = todo.Category != null ? new CategoryDto
+            {
+                Id = todo.Category.Id,
+                Name = todo.Category.Name,
+                Color = todo.Category.Color
+            } : null,
+            Tags = todo.TodoItemTags.Select(tt => new TagDto
+            {
+                Id = tt.Tag.Id,
+                Name = tt.Tag.Name
+            }).ToList()
         };
     }
 }

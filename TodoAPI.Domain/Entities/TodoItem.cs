@@ -7,7 +7,13 @@ public class TodoItem
     public bool IsCompleted { get; set; }
     public DateTime CreatedAt { get; set; }
 
-    // Règles métier pures dans le Domain
+    // Relation N-1 : Un todo appartient à UNE catégorie (optionnel)
+    public int? CategoryId { get; set; }
+    public Category? Category { get; set; }
+
+    // Relation N-N : Un todo peut avoir plusieurs tags
+    public ICollection<TodoItemTag> TodoItemTags { get; set; } = new List<TodoItemTag>();
+
     public static bool IsTitleValid(string title)
         => !string.IsNullOrEmpty(title)
         && title.Length >= 3

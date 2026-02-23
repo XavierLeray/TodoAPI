@@ -63,7 +63,7 @@ public class TodosController : ControllerBase
             return ValidationProblem(new ValidationProblemDetails(errors));
         }
 
-        var todo = await _mediator.Send(new CreateTodoCommand(request.Title));
+        var todo = await _mediator.Send(new CreateTodoCommand(request.Title, request.CategoryId, request.TagIds));
         return CreatedAtAction(nameof(GetById), new { id = todo.Id }, todo);
     }
 
@@ -77,7 +77,8 @@ public class TodosController : ControllerBase
         if (id != request.Id)
             return BadRequest("ID mismatch");
 
-        var updated = await _mediator.Send(new UpdateTodoCommand(request.Id, request.Title, request.IsCompleted));
+        var updated = await _mediator.Send(new UpdateTodoCommand(
+            request.Id, request.Title, request.IsCompleted, request.CategoryId, request.TagIds));
         return updated is null ? NotFound() : Ok(updated);
     }
 
