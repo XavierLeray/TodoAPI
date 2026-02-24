@@ -16,6 +16,7 @@ public static class DependencyInjection
             options.UseSqlite(connectionString));
 
         services.AddScoped<ITodoRepository, EfTodoRepository>();
+        services.AddScoped<ISparePartRepository, EfSparePartRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtService, JwtService>();
 

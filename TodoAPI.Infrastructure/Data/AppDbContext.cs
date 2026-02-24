@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> RolesTable => Set<Role>();
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<SparePart> SpareParts => Set<SparePart>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -150,6 +151,63 @@ public class AppDbContext : DbContext
                 RoleId = 1,
                 AssignedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc)
             });
+        });
+
+        modelBuilder.Entity<SparePart>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Reference).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Description).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.VhuCenter).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Price).IsRequired();
+            entity.Property(e => e.StockQuantity).IsRequired();
+            entity.Property(e => e.Status).IsRequired();
+            entity.Property(e => e.ReservedByChannel).HasMaxLength(100);
+            entity.Property(e => e.ReservedByBuyer).HasMaxLength(200);
+            entity.Property(e => e.CreatedAt).IsRequired();
+
+            entity.Property(e => e.ConcurrencyStamp)
+                .IsConcurrencyToken()
+                .HasMaxLength(36);
+
+            entity.HasData(
+                new SparePart
+                {
+                    Id = 1,
+                    Reference = "8200162474",
+                    Description = "Alternateur Renault Clio 3 1.5 dCi",
+                    VhuCenter = "AutoCasse Toulouse #42",
+                    Price = 89.90m,
+                    StockQuantity = 1,
+                    Status = PartStatus.Available,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    ConcurrencyStamp = "seed-stamp-part-1"
+                },
+                new SparePart
+                {
+                    Id = 2,
+                    Reference = "7701054753",
+                    Description = "Rétroviseur gauche Peugeot 308",
+                    VhuCenter = "VHU Lyon #18",
+                    Price = 45.50m,
+                    StockQuantity = 1,
+                    Status = PartStatus.Available,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    ConcurrencyStamp = "seed-stamp-part-2"
+                },
+                new SparePart
+                {
+                    Id = 3,
+                    Reference = "8200768913",
+                    Description = "Phare avant droit Renault Megane 3",
+                    VhuCenter = "VHU Nantes #7",
+                    Price = 120.00m,
+                    StockQuantity = 1,
+                    Status = PartStatus.Available,
+                    CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+                    ConcurrencyStamp = "seed-stamp-part-3"
+                }
+            );
         });
     }
 }
