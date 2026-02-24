@@ -33,6 +33,20 @@ public class AppDbContext : DbContext
                 .WithMany(c => c.TodoItems)
                 .HasForeignKey(t => t.CategoryId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // Concurrency token — verrouillage optimiste
+            // Le ConcurrencyStamp est un GUID régénéré par le repository à chaque UPDATE.
+            // EF Core l'inclut dans la clause WHERE :
+            //   UPDATE TodoItems SET ... WHERE Id = @id AND ConcurrencyStamp = @expected
+            // Si un autre utilisateur a modifié la ligne → 0 rows → DbUpdateConcurrencyException.
+            //
+            // Avantage du GUID string vs byte[] rowversion :
+            //   - Portable (SQLite, InMemory, PostgreSQL, SQL Server)
+            //   - Pas de HasDefaultValueSql / ValueGeneratedOnAddOrUpdate
+            //   - Sérialisation JSON directe (pas de Base64)
+            entity.Property(e => e.ConcurrencyStamp)
+                .IsConcurrencyToken()
+                .HasMaxLength(36);
         });
 
         modelBuilder.Entity<Category>(entity =>

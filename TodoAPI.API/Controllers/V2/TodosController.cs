@@ -10,6 +10,7 @@ using TodoAPI.Application.DTOs;
 using TodoAPI.Application.Queries.GetAllTodos;
 using TodoAPI.Application.Queries.GetTodoById;
 using TodoAPI.Domain.Constants;
+using TodoAPI.Domain.Exceptions;
 
 namespace TodoAPI.API.Controllers.V2;
 
@@ -72,14 +73,30 @@ public class TodosController : ControllerBase
     [ProducesResponseType(typeof(TodoItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<TodoItemResponse>> Update(int id, [FromBody] UpdateTodoRequest request)
     {
         if (id != request.Id)
             return BadRequest("ID mismatch");
 
-        var updated = await _mediator.Send(new UpdateTodoCommand(
-            request.Id, request.Title, request.IsCompleted, request.CategoryId, request.TagIds));
-        return updated is null ? NotFound() : Ok(updated);
+        try
+        {
+            var updated = await _mediator.Send(new UpdateTodoCommand(
+                request.Id, request.Title, request.IsCompleted,
+                request.CategoryId, request.TagIds, request.ConcurrencyStamp));
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (ConcurrencyConflictException ex)
+        {
+            // 409 Conflict — l'entité a été modifiée par un autre utilisateur
+            // Le client doit recharger l'entité (GET) et réessayer
+            return Conflict(new
+            {
+                error = "ConcurrencyConflict",
+                message = ex.Message,
+                entityId = ex.EntityId
+            });
+        }
     }
 
     [Authorize(Roles = Roles.Admin)]

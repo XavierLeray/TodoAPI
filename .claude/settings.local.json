@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(cd \"C:/Users/xavie/Documents/CV/job/Entretiens/21_Opisto/Code/TodoAPI\" && dotnet build 2>&1)",
+      "Bash(cd \"C:/Users/xavie/Documents/CV/job/Entretiens/21_Opisto/Code/TodoAPI\" && dotnet test 2>&1)",
+      "Bash(cd \"C:/Users/xavie/Documents/CV/job/Entretiens/21_Opisto/Code/TodoAPI\" && dotnet test TodoAPI.Infrastructure.Tests 2>&1)",
+      "Bash(cd \"C:/Users/xavie/Documents/CV/job/Entretiens/21_Opisto/Code/TodoAPI\" && dotnet test TodoAPI.Domain.Tests TodoAPI.Application.Tests TodoAPI.Infrastructure.Tests 2>&1)",
+      "Bash(cd \"C:/Users/xavie/Documents/CV/job/Entretiens/21_Opisto/Code/TodoAPI\" && dotnet test --filter \"FullyQualifiedName~TodoAPI.Domain.Tests|FullyQualifiedName~TodoAPI.Application.Tests|FullyQualifiedName~TodoAPI.Infrastructure.Tests\" 2>&1)"
+    ]
+  }
+}

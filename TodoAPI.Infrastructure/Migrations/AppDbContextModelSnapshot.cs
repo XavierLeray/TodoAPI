@@ -154,6 +154,12 @@ namespace TodoAPI.Infrastructure.Migrations
                     b.Property<int?>("CategoryId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(36)
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -229,7 +235,7 @@ namespace TodoAPI.Infrastructure.Migrations
                             Id = 1,
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             Email = "admin@todoapi.com",
-                            PasswordHash = "$2a$11$Ntqivrum6dKuEheU..DBRuRaBWxmbGbM43kDFG36r9A5nf1irw6ee",
+                            PasswordHash = "$2a$11$hQUL.niWtQc58jYcBHr2IOpn3i08GhJTFNWIN/MGyi8gMqs2o/Di6",
                             Username = "admin"
                         });
                 });

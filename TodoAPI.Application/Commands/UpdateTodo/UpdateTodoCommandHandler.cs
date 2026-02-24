@@ -26,6 +26,7 @@ public class UpdateTodoCommandHandler : IRequestHandler<UpdateTodoCommand, TodoI
             Title = request.Title,
             IsCompleted = request.IsCompleted,
             CategoryId = request.CategoryId,
+            ConcurrencyStamp = request.ConcurrencyStamp ?? string.Empty,
             TodoItemTags = request.TagIds.Select(tagId => new TodoItemTag
             {
                 TagId = tagId,
@@ -49,6 +50,7 @@ public class UpdateTodoCommandHandler : IRequestHandler<UpdateTodoCommand, TodoI
         Title = todo.Title,
         IsCompleted = todo.IsCompleted,
         CreatedAt = todo.CreatedAt,
+        ConcurrencyStamp = todo.ConcurrencyStamp,
         Category = todo.Category != null ? new CategoryDto
         {
             Id = todo.Category.Id,

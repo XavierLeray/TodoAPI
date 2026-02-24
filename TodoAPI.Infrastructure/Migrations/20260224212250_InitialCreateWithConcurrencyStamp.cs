@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TodoAPI.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateWithRowVersion : Migration
+    public partial class InitialCreateWithConcurrencyStamp : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -81,7 +81,8 @@ namespace TodoAPI.Infrastructure.Migrations
                     Title = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     IsCompleted = table.Column<bool>(type: "INTEGER", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CategoryId = table.Column<int>(type: "INTEGER", nullable: true)
+                    CategoryId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "TEXT", maxLength: 36, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -176,7 +177,7 @@ namespace TodoAPI.Infrastructure.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "CreatedAt", "Email", "PasswordHash", "Username" },
-                values: new object[] { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@todoapi.com", "$2a$11$Ntqivrum6dKuEheU..DBRuRaBWxmbGbM43kDFG36r9A5nf1irw6ee", "admin" });
+                values: new object[] { 1, new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "admin@todoapi.com", "$2a$11$hQUL.niWtQc58jYcBHr2IOpn3i08GhJTFNWIN/MGyi8gMqs2o/Di6", "admin" });
 
             migrationBuilder.InsertData(
                 table: "UserRoles",

@@ -25,6 +25,7 @@ public class GetTodoByIdQueryHandler : IRequestHandler<GetTodoByIdQuery, TodoIte
             Title = todo.Title,
             IsCompleted = todo.IsCompleted,
             CreatedAt = todo.CreatedAt,
+            ConcurrencyStamp = todo.ConcurrencyStamp,
             Category = todo.Category != null ? new CategoryDto
             {
                 Id = todo.Category.Id,

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TodoAPI.Domain.Entities;
+using TodoAPI.Domain.Exceptions;
 using TodoAPI.Domain.Ports;
 using TodoAPI.Infrastructure.Data;
 
@@ -49,14 +50,37 @@ public class EfTodoRepository : ITodoRepository
 
         if (existing is null) return null;
 
+        // Appliquer le ConcurrencyStamp reçu du client pour la détection de conflit.
+        // EF Core inclura ce stamp dans la clause WHERE du UPDATE :
+        //   UPDATE TodoItems SET ... WHERE Id = @id AND ConcurrencyStamp = @expected
+        // Si un autre utilisateur a modifié la ligne entre-temps, le WHERE ne matche pas
+        // → 0 rows affected → DbUpdateConcurrencyException
+        if (!string.IsNullOrEmpty(todo.ConcurrencyStamp))
+        {
+            _context.Entry(existing).Property(e => e.ConcurrencyStamp).OriginalValue = todo.ConcurrencyStamp;
+        }
+
         existing.Title = todo.Title;
         existing.IsCompleted = todo.IsCompleted;
         existing.CategoryId = todo.CategoryId;
 
+        // Générer un nouveau ConcurrencyStamp pour cette modification
+        existing.ConcurrencyStamp = Guid.NewGuid().ToString();
+
         existing.TodoItemTags.Clear();
         existing.TodoItemTags = todo.TodoItemTags;
 
-        await _context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Conflit détecté : l'entité a été modifiée par un autre utilisateur
+            // On laisse la couche Application/API décider quoi faire (409 Conflict)
+            throw new ConcurrencyConflictException(nameof(TodoItem), id);
+        }
+
         return existing;
     }
 

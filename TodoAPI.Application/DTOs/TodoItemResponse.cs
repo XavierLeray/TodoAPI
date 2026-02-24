@@ -8,6 +8,11 @@ public class TodoItemResponse
     public DateTime CreatedAt { get; set; }
     public CategoryDto? Category { get; set; }
     public List<TagDto> Tags { get; set; } = new();
+
+    /// <summary>
+    /// Concurrency token (GUID) — à renvoyer dans le PUT pour détecter les conflits.
+    /// </summary>
+    public string? ConcurrencyStamp { get; set; }
 }
 
 public class CategoryDto
