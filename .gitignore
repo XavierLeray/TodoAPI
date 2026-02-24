@@ -22,3 +22,5 @@ Thumbs.db
 ## Backups
 *.tmp
 *.bak
+# Claude Code
+.claude/
